@@ -1,0 +1,46 @@
+//
+//  LogCommand.swift
+//  XO-game
+//
+//  Created by Максим Валюшко on 10.02.2022.
+//  Copyright © 2022 plasmon. All rights reserved.
+//
+
+import Foundation
+
+// MARK: - Command
+
+final class LogCommand {
+    
+    let action: LogAction
+    
+    init(action: LogAction) {
+        self.action = action
+    }
+    
+    var logMessage: String {
+        switch self.action {
+        case .playerInput(let player, let position):
+            return "\(player) placed mark at \(position)"
+        case .gameFinished(let winner):
+            if let winner = winner {
+                return "\(winner) win game"
+            } else {
+                return "game finished with no winner"
+            }
+        case .restartGame:
+            return "game restarted"
+        }
+    }
+}
+
+// MARK: - Receiver
+
+final class Logger {
+    func writeMessageToLog(_ message: String) {
+        /// Здесь должна быть реализация записи сообщения в лог.
+        /// Для простоты примера паттерна не вдаемся в эту реализацию,
+        /// а просто печатаем текст в консоль.
+        print(message)
+    }
+}

@@ -9,6 +9,8 @@
 import UIKit
 
 class GameViewController: UIViewController {
+    
+    //MARK: - Properties
 
     @IBOutlet var gameboardView: GameboardView!
     @IBOutlet var firstPlayerTurnLabel: UILabel!
@@ -16,16 +18,59 @@ class GameViewController: UIViewController {
     @IBOutlet var winnerLabel: UILabel!
     @IBOutlet var restartButton: UIButton!
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        gameboardView.onSelectPosition = { [weak self] position in
-            guard let self = self else { return }
-            self.gameboardView.placeMarkView(XView(), at: position)
+    private let gameboard = Gameboard()
+    private var currentState: GameState! {
+        didSet {
+            self.currentState.begin()
         }
     }
     
-    @IBAction func restartButtonTapped(_ sender: UIButton) {
+    private lazy var referee = Referee(gameboard: self.gameboard)
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
         
+        self.goToFirstState()
+        
+        gameboardView.onSelectPosition = { [weak self] position in
+            guard let self = self else { return }
+            self.currentState.addMark(at: position)
+            if self.currentState.isCompleted {
+                self.goToNextState()
+            }
+        }
+    }
+    
+    //MARK: - Private
+    private func goToFirstState() {
+        let player = Player.first
+        self.currentState = PlayerInputState(player: player,
+                                             markViewPrototype: player.markViewPrototype,
+                                             gameViewController: self,
+                                             gameboard: gameboard,
+                                             gameboardView: gameboardView)
+    }
+
+    private func goToNextState() {
+        if let winner = self.referee.determineWinner() {
+            self.currentState = GameEndedState(winner: winner, gameViewController: self)
+            return
+        }
+        if let playerInputState = currentState as? PlayerInputState {
+            let player = playerInputState.player.next
+            self.currentState = PlayerInputState(player: player,
+                                                 markViewPrototype: player.markViewPrototype,
+                                                 gameViewController: self,
+                                                 gameboard: gameboard,
+                                                 gameboardView: gameboardView)
+        }
+    }
+    
+    //MARK: - Actions
+    @IBAction func restartButtonTapped(_ sender: UIButton) {
+        Log(.restartGame)
+        self.goToFirstState()
+        self.gameboardView.clear()
     }
 }
 
